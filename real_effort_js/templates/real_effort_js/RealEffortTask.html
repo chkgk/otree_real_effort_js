@@ -1,0 +1,104 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Tasks
+{% endblock %}
+
+{% block styles %}
+    <style type="text/css">
+        #task_display {
+            border:1px solid #f4f5ff;
+            background: #f4e4e3
+        }
+    </style>
+{% endblock %}
+
+
+
+{% block content %}
+
+
+
+    <div class="card">
+        <div class="card-body" id="input_box" align="center">
+            <div align="center">
+                <canvas id="task_display" width="200" height="80">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </div>
+            <p>Enter the code you see in the picture above:<br>
+                <input type="text" id="code_input" name="code_input" autocomplete="off"></p>
+            <button type="button" class="btn btn-primary" id="enter_button">enter</button>
+        </div>
+    </div>
+
+    <input type="hidden" name="num_seen" id="id_num_seen">
+    <input type="hidden" name="num_correct" id="id_num_correct">
+
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        var num_chars = {{ Constants.num_chars|json }};
+
+        var seen = 0;
+        var correct = 0;
+
+        var input_element = $('#code_input');
+        var seen_output = $('#id_num_seen');
+        var correct_output = $('#id_num_correct');
+
+        $("#code_input").keypress(function(e){
+           if(e.keyCode === 13){
+               e.preventDefault();
+               enter();
+           }
+        });
+
+        function get_code(num_chars) {
+            var code = "";
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+            for (var i = 0; i < num_chars; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        function draw_task(element_id, code) {
+            var c = document.getElementById(element_id);
+            var ctx = c.getContext("2d");
+            ctx.font = "30px Courier";
+            ctx.clearRect(0, 0, c.width, c.height);
+            ctx.fillText(code,60,50);
+        }
+
+        function enter() {
+            var code_entered = input_element.val();
+            if (code_entered === current_code) {
+                correct++;
+            }
+
+
+            // next task
+            current_code = get_code(num_chars);
+            draw_task('task_display', current_code);
+            seen++;
+
+            input_element.val('');
+            input_element.focus();
+
+            seen_output.val(seen);
+            correct_output.val(correct);
+        }
+
+        // prepare
+        var current_code = get_code(num_chars);
+        draw_task('task_display', current_code);
+        seen++;
+
+        $('#enter_button').click(enter);
+
+    </script>
+{% endblock %}

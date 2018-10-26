@@ -1,0 +1,17 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Results
+{% endblock %}
+
+
+
+{% block content %}
+
+    <p>You have seen {{ player.num_seen }} tasks.<br>
+    You have solved {{ player.num_correct }} tasks correctly.</p>
+
+    {% next_button %}
+
+{% endblock %}
