@@ -11,17 +11,32 @@
             border:1px solid #f4f5ff;
             background: #f4e4e3
         }
+        #feedback_box {
+            display: inline-block;
+        }
+        #feedback {
+            font-weight: bold;
+        }
+        .correct_color {
+            color: green;
+        }
+        .incorrect_color {
+            color: red;
+        }
+
     </style>
 {% endblock %}
 
-
-
 {% block content %}
-
-
 
     <div class="card">
         <div class="card-body" id="input_box" align="center">
+            <div id="feedback_box">
+                <span id="feedback"></span>
+            </div>
+            <div id="statistics_box">
+                Task: <span id="num_tasks">1</span> - Correct: <span id="num_correct">0</span>
+            </div>
             <div align="center">
                 <canvas id="task_display" width="200" height="80">
                     Your browser does not support the HTML5 canvas tag.
@@ -36,18 +51,39 @@
     <input type="hidden" name="num_seen" id="id_num_seen">
     <input type="hidden" name="num_correct" id="id_num_correct">
 
+    {% if view.is_debug|default:False %}
+        <div align="right"><button type="submit" class="btn btn-warning">DEBUG: Skip the task</button></div>
+    {% endif %}
+
 {% endblock %}
 
 {% block scripts %}
     <script type="text/javascript">
+        // get settings from constants
         var num_chars = {{ Constants.num_chars|json }};
+        var allowed_chars = {{ Constants.allowed_chars|json }};
+        var give_feedback = {{ Constants.give_feedback|json }};
+        var show_statistics = {{ Constants.show_statistics|json }};
+        var feedback_duration = {{ Constants.feedback_duration|json }};
 
+        // feedback messages:
+        var correct_message = "Correct!";
+        var incorrect_message = "Wrong!";
+
+        // keep track of these items
+        var current_code = "";
         var seen = 0;
         var correct = 0;
 
+        // get form fields
         var input_element = $('#code_input');
         var seen_output = $('#id_num_seen');
         var correct_output = $('#id_num_correct');
+        var e_feedback = $('#feedback');
+        var e_feedback_box = $('#feedback_box');
+        var e_num_correct = $('#num_correct');
+        var e_num_seen = $('#num_tasks');
+        var e_statistics_box = $('#statistics_box');
 
         $("#code_input").keypress(function(e){
            if(e.keyCode === 13){
@@ -61,7 +97,7 @@
             var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
             for (var i = 0; i < num_chars; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
+                code += allowed_chars.charAt(Math.floor(Math.random() * allowed_chars.length));
             }
             return code;
         }
@@ -72,31 +108,66 @@
             ctx.font = "30px Courier";
             ctx.clearRect(0, 0, c.width, c.height);
             ctx.fillText(code,60,50);
+            seen++;
+            seen_output.val(seen);
         }
 
         function enter() {
+            // check if correct
             var code_entered = input_element.val();
             if (code_entered === current_code) {
                 correct++;
+                if (give_feedback) {
+                    e_feedback.removeClass('incorrect_color');
+                    e_feedback.addClass('correct_color');
+                    e_feedback.html(correct_message);
+                    e_feedback.show();
+                    setTimeout(function () {
+                        e_feedback.hide();
+                    }, feedback_duration);
+                }
+            } else {
+                if (give_feedback) {
+                    e_feedback.removeClass('correct_color');
+                    e_feedback.addClass('incorrect_color');
+                    e_feedback.html(incorrect_message);
+                    e_feedback.show();
+                    setTimeout(function () {
+                        e_feedback.hide();
+                    }, feedback_duration);
+                }
             }
-
 
             // next task
             current_code = get_code(num_chars);
             draw_task('task_display', current_code);
-            seen++;
 
             input_element.val('');
             input_element.focus();
 
-            seen_output.val(seen);
             correct_output.val(correct);
+
+            // update statistics
+            if (show_statistics && give_feedback) {
+                e_num_seen.html(seen);
+                e_num_correct.html(correct);
+            }
         }
 
         // prepare
         var current_code = get_code(num_chars);
         draw_task('task_display', current_code);
-        seen++;
+        correct_output.val(0);
+
+        // configure feedback display
+        if (!give_feedback) {
+            e_feedback_box.hide();
+            e_statistics_box.hide();
+        }
+
+        if (!show_statistics) {
+            e_statistics_box.hide();
+        }
 
         $('#enter_button').click(enter);
 

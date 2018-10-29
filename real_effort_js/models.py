@@ -16,9 +16,16 @@ class Constants(BaseConstants):
     players_per_group = None
     num_rounds = 1
 
-    real_effort_time_limit = 20     # seconds
+
+    real_effort_time_limit = 30     # seconds
     num_chars = 4                   # number of characters per task
 
+    # specify character set to draw from
+    allowed_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+
+    give_feedback = True            # correct / incorrect feedback for each input
+    show_statistics = True          # show number of seen / correct tasks, only relevant if give feedback is True
+    feedback_duration = 500         # duration of feedback message on screen, in milliseconds.
 
 class Subsession(BaseSubsession):
     pass
